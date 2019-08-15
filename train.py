@@ -7,6 +7,7 @@ import json
 import os
 import random
 
+from absl import logging
 import tensorflow as tf
 from bert_serving.client import ConcurrentBertClient
 
@@ -14,7 +15,7 @@ from model.params import Params
 from model.input_fn import train_input_fn, eval_input_fn
 from model.model_fn import model_fn
 
-tf.logging.set_verbosity(tf.logging.INFO)
+logging.set_verbosity(logging.INFO)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -44,7 +45,7 @@ print("Args: ", args)
 
 bc = ConcurrentBertClient(port=args.bert_port, port_out=args.bert_port_out)
 
-tf.logging.info("Initialized ")
+logging.info("ConcurrentBertClient initialized")
 
 json_path = os.path.join(args.model_dir, "params.json")
 assert os.path.isfile(json_path), f"No configuration file found at {json_path}"

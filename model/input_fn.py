@@ -21,7 +21,7 @@ def train_input_fn(filenames: str, params: Params, bc: ConcurrentBertClient):
         .batch(params.batch_size)
         .map(
             lambda text_, label: (
-                tf.py_func(bc.encode, [text_], [tf.float32], name="bert_client"),
+                tf.py_function(bc.encode, [text_], [tf.float32], name="bert_client"),
                 label,
             ),
             num_parallel_calls=params.num_parallel_calls,
@@ -44,7 +44,7 @@ def eval_input_fn(filenames: str, params: Params, bc: ConcurrentBertClient):
         .batch(params.batch_size)
         .map(
             lambda text_, label: (
-                tf.py_func(bc.encode, [text_], [tf.float32], name="bert_client"),
+                tf.py_function(bc.encode, [text_], [tf.float32], name="bert_client"),
                 label,
             ),
             num_parallel_calls=params.num_parallel_calls,

@@ -10,11 +10,14 @@ download-dataset:
 download-model:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} ./download_model.sh
 
-train: clean
-	docker-compose --build
-	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up -d bert-server
-	sleep 10
-	docker-compose up train
+build:
+		docker-compose --build
+
+bert-server:
+	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build -d bert-server
+
+train:
+	docker-compose up --build train
 
 local:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build bert-server
