@@ -1,0 +1,35 @@
+version: "3"
+services:
+  bert-server:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-bert-server
+    command: -model_dir /tmp/${MODEL_NAME}/ -num_worker=1
+    network_mode: host
+    ports:
+      - "5555:5555"
+      - "5556:5556"
+    image: stylometer/bert-as-service
+    volumes:
+      - ./${MODEL_PATH}/:/tmp/${MODEL_NAME}/:ro
+
+  train:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-train
+    image: stylometer/train
+    network_mode: host
+    volumes:
+      - ./experiments/:/tmp/experiments/:rw
+      - ./data/:/tmp/data/:ro
+
+  data:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-data
+    image: stylometer/data
+    environment:
+      - TWITTER_CONSUMER_KEY=${TWITTER_CONSUMER_KEY}
+      - TWITTER_CONSUMER_SECRET_KEY=${TWITTER_CONSUMER_SECRET_KEY}
+      - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
+      - TWITTER_ACCESS_TOKEN_SECRET=${TWITTER_ACCESS_TOKEN_SECRET}

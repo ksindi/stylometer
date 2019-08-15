@@ -1,0 +1,22 @@
+FROM python:3.7-slim
+LABEL Application="stylometer" maintainer="Kamil Sindi <kysindi@gmail.com>"
+
+# System setup
+ENV user app
+ENV dir /home/app
+
+RUN useradd -ms /bin/bash ${user}
+
+WORKDIR ${dir}
+
+RUN python3 -m ensurepip
+RUN pip3 install --upgrade pip setuptools bert-serving-server[cpu]
+
+# App setup
+USER ${user}
+
+EXPOSE 5555
+EXPOSE 5556
+
+ENTRYPOINT ["bert-serving-start"]
+CMD ["-model_dir", "/tmp/english_L-12_H-768_A-12/", "-num_worker=4"]
