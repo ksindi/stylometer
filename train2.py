@@ -11,9 +11,9 @@ from absl import logging
 import tensorflow as tf
 from bert_serving.client import ConcurrentBertClient
 
-from model import params
-from model import model
-from model import dataset
+from model.params import Params
+from model.input_fn import train_input_fn, eval_input_fn
+from model.model_fn import model_fn
 
 logging.set_verbosity(logging.INFO)
 
@@ -57,45 +57,19 @@ assert os.path.isfile(eval_fp), f"No eval file found at {eval_fp}"
 
 params = Params(json_path)
 
-model = model.StylometerModel()
-
-log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-os.makedirs(log_dir)
-
-steps_per_epoch = round(num_train) // params.batch_size
-validation_steps = round(num_val) // params.batch_size
-
-train = dataset.train(train_fp)
-validation = dataset.validation(eval_fp)
-
-model.compile(
-    optimizer="adam",
-    loss=tf.contrib.losses.metric_learning.triplet_semihard_loss,
-    metrics=["accuracy"],
+config = tf.estimator.RunConfig(
+    tf_random_seed=42,
+    model_dir=args.model_dir,
+    save_summary_steps=params.save_summary_steps,
+    save_checkpoints_secs=120,
 )
 
-print(model.summary())
-# tf.keras.utils.plot_model(simple_model, 'flower_model_with_shape_info.png', show_shapes=True)
+estimator = tf.estimator.Estimator(model_fn, params=params, config=config)
 
-# Creating Keras callbacks
-tensorboard_callback = tf.keras.callbacks.TensorBoard(
-    log_dir=log_dir, histogram_freq=1
+train_spec = tf.estimator.TrainSpec(
+    input_fn=lambda: train_input_fn(train_fp, params, bc)
 )
-model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    "training_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5", period=5
+eval_spec = tf.estimator.EvalSpec(
+    input_fn=lambda: eval_input_fn(eval_fp, params, bc), throttle_secs=0
 )
-os.makedirs("training_checkpoints/", exist_ok=True)
-early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
-
-history = model.fit(
-    train.repeat(),
-    epochs=5,
-    steps_per_epoch=steps_per_epoch,
-    validation_data=validation.repeat(),
-    validation_steps=validation_steps,
-    callbacks=[
-        tensorboard_callback,
-        model_checkpoint_callback,
-        early_stopping_checkpoint,
-    ],
-)
+tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)

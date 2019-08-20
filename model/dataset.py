@@ -7,7 +7,7 @@ from bert_serving.client import ConcurrentBertClient
 from model.params import Params
 
 
-def train_input_fn(filenames: str, params: Params, bc: ConcurrentBertClient):
+def train(filenames: str, params: Params, bc: ConcurrentBertClient):
     # datatest must be tuples of the text and the label
     return (
         tf.data.experimental.CsvDataset(
@@ -31,7 +31,7 @@ def train_input_fn(filenames: str, params: Params, bc: ConcurrentBertClient):
     )
 
 
-def eval_input_fn(filenames: str, params: Params, bc: ConcurrentBertClient):
+def validation(filenames: str, params: Params, bc: ConcurrentBertClient):
     # datatest must be tuples of the text and the label
     return (
         tf.data.experimental.CsvDataset(

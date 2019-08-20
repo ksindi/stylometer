@@ -20,7 +20,7 @@ def model_fn(features, labels, mode, params):
     """
 
     # MODEL: define the layers of the model
-    #with tf.variable_scope("model"):
+    # with tf.variable_scope("model"):
     #        embeddings = tf.layers.dense(features, params.embedding_size)
     embeddings = features
 
