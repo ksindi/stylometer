@@ -3,6 +3,7 @@
 """Train the model"""
 
 import argparse
+import datetime
 import json
 import os
 import random
@@ -45,37 +46,31 @@ print("Args: ", args)
 
 bc = ConcurrentBertClient(port=args.bert_port, port_out=args.bert_port_out)
 
-logging.info("ConcurrentBertClient initialized")
+logging.info("BertClient initialized")
 
 json_path = os.path.join(args.model_dir, "params.json")
 assert os.path.isfile(json_path), f"No configuration file found at {json_path}"
 
 train_fp = os.path.join(args.data_dir, "train.csv")
-eval_fp = os.path.join(args.data_dir, "eval.csv")
 assert os.path.isfile(train_fp), f"No train file found at {train_fp}"
-assert os.path.isfile(eval_fp), f"No eval file found at {eval_fp}"
+eval_fp = os.path.join(args.data_dir, "eval.csv")
+assert os.path.isfile(eval_fp), f"No validation file found at {eval_fp}"
 
-params = Params(json_path)
+params = params.Params(json_path)
 
-model = model.StylometerModel()
+model = model.StylometerModel(params)
 
 log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
 
-steps_per_epoch = round(num_train) // params.batch_size
-validation_steps = round(num_val) // params.batch_size
-
-train = dataset.train(train_fp)
-validation = dataset.validation(eval_fp)
+train = dataset.train(train_fp, params, bc)
+validation = dataset.train(eval_fp, params, bc)
 
 model.compile(
     optimizer="adam",
-    loss=tf.contrib.losses.metric_learning.triplet_semihard_loss,
-    metrics=["accuracy"],
+    loss="categorical_crossentropy",  # tf.contrib.losses.metric_learning.triplet_semihard_loss,
+    metrics=["accuracy"],  # keras_metrics.precision(), keras_metrics.recall()
 )
-
-print(model.summary())
-# tf.keras.utils.plot_model(simple_model, 'flower_model_with_shape_info.png', show_shapes=True)
 
 # Creating Keras callbacks
 tensorboard_callback = tf.keras.callbacks.TensorBoard(
@@ -89,13 +84,15 @@ early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
 
 history = model.fit(
     train.repeat(),
-    epochs=5,
-    steps_per_epoch=steps_per_epoch,
-    validation_data=validation.repeat(),
-    validation_steps=validation_steps,
+    #epochs=5,
+    #batch_size=params.batch_size,
+    validation_data=validation,
     callbacks=[
         tensorboard_callback,
         model_checkpoint_callback,
         early_stopping_checkpoint,
     ],
 )
+
+print(model.summary())
+# tf.keras.utils.plot_model(simple_model, 'flower_model_with_shape_info.png', show_shapes=True)

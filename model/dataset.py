@@ -17,7 +17,7 @@ def train(filenames: str, params: Params, bc: ConcurrentBertClient):
             field_delim=",",
             select_cols=[1, 2],  # Only parse last two columns
         )
-        .apply(tf.data.experimental.shuffle_and_repeat(buffer_size=params.buffer_size))
+        .shuffle(buffer_size=params.buffer_size)
         .batch(params.batch_size)
         .map(
             lambda text_, label: (
@@ -26,7 +26,6 @@ def train(filenames: str, params: Params, bc: ConcurrentBertClient):
             ),
             num_parallel_calls=params.num_parallel_calls,
         )
-        # .map(lambda x, y: ({"feature": x}, y))
         .prefetch(1)  # make sure you always have one batch ready to serve
     )
 
@@ -35,7 +34,7 @@ def validation(filenames: str, params: Params, bc: ConcurrentBertClient):
     # datatest must be tuples of the text and the label
     return (
         tf.data.experimental.CsvDataset(
-            filenames=eval_fp,
+            filenames=filenames,
             record_defaults=[tf.string, tf.string],
             header=True,
             field_delim=",",
@@ -49,6 +48,5 @@ def validation(filenames: str, params: Params, bc: ConcurrentBertClient):
             ),
             num_parallel_calls=params.num_parallel_calls,
         )
-        # .map(lambda x, y: ({"feature": x}, y))
         .prefetch(1)  # make sure you always have one batch ready to serve
     )
