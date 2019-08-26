@@ -60,11 +60,11 @@ params = params.Params(json_path)
 
 model = model.StylometerModel(params)
 
-log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
 
-train = dataset.train(train_fp, params, bc)
-validation = dataset.train(eval_fp, params, bc)
+train = dataset.training_dataset(train_fp, params, bc)
+validation = dataset.training_dataset(eval_fp, params, bc)
 
 model.compile(
     optimizer="adam",
@@ -73,9 +73,7 @@ model.compile(
 )
 
 # Creating Keras callbacks
-tensorboard_callback = tf.keras.callbacks.TensorBoard(
-    log_dir=log_dir, histogram_freq=1
-)
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     "training_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5", period=5
 )
@@ -84,13 +82,15 @@ early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
 
 history = model.fit(
     train.repeat(),
-    #epochs=5,
-    #batch_size=params.batch_size,
+    # epochs=5,
+    # batch_size=params.batch_size,
+    shuffle=True,
+    steps_per_epoch=100,
     validation_data=validation,
     callbacks=[
         tensorboard_callback,
         model_checkpoint_callback,
-        early_stopping_checkpoint,
+        #early_stopping_checkpoint,
     ],
 )
 

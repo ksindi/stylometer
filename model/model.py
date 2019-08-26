@@ -21,7 +21,7 @@ class StylometerModel(tf.keras.Model):
         self.dense_1 = tf.keras.layers.Dense(32, activation="relu")
         self.dense_2 = tf.keras.layers.Dense(num_classes, activation="sigmoid")
 
-    def __call__(self, embeddings):
+    def call(self, input_data):
         """
         Invoke the model.
         Args:
@@ -29,16 +29,17 @@ class StylometerModel(tf.keras.Model):
         Returns:
             logits: Tensor [B, (1 + n), 2] containing unscaled predictions.
         """
-        #embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
-        #inputs = Input(shape=(768,))
+        # embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
+        # inputs = Input(shape=(768,))
         # [batch_size, sentence_embeddings]
-        x = self.dense_1(embeddings)
+        print(input_data)
+        x = self.dense_1(input_data)
 
-        loss, fraction = batch_all_triplet_loss(
-            labels, embeddings, margin=self.margin, squared=self.squared
-        )
+        #loss, fraction = batch_all_triplet_loss(
+        #    labels, embeddings, margin=self.margin, squared=self.squared
+        #)
 
-        return logits
+        return x
 
 
 def predict_text(text, bc, maxlen, model):

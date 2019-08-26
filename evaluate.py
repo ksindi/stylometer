@@ -35,14 +35,4 @@ if __name__ == "__main__":
     )
     params = Params(json_path)
 
-    # Define the model
-    tf.logging.info("Creating the model...")
-    estimator = tf.estimator.Estimator(
-        model_fn, params=params, model_dir=args.model_dir
-    )
-
-    # Evaluate the model on the test set
-    tf.logging.info("Evaluation on the test set.")
-    res = estimator.evaluate(lambda: test_input_fn(args.data_dir, params))
-    for key in res:
-        print("{}: {}".format(key, res[key]))
+    # TODO
