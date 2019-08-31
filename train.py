@@ -90,7 +90,7 @@ history = model.fit(
     callbacks=[
         tensorboard_callback,
         model_checkpoint_callback,
-        #early_stopping_checkpoint,
+        # early_stopping_checkpoint,
     ],
 )
 

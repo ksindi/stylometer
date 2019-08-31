@@ -23,6 +23,16 @@ services:
       - ./experiments/:/tmp/experiments/:rw
       - ./data/:/tmp/data/:ro
 
+  tfrecords:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-train
+    image: stylometer/train
+    command: ["python3", "tfrecords.py"]
+    network_mode: host
+    volumes:
+      - ./data/:/tmp/data/:rw
+
   data:
     build:
       context: .

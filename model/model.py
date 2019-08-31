@@ -35,9 +35,9 @@ class StylometerModel(tf.keras.Model):
         print(input_data)
         x = self.dense_1(input_data)
 
-        #loss, fraction = batch_all_triplet_loss(
+        # loss, fraction = batch_all_triplet_loss(
         #    labels, embeddings, margin=self.margin, squared=self.squared
-        #)
+        # )
 
         return x
 
