@@ -8,17 +8,16 @@ from model.params import Params
 
 
 def f(x):
-    print("TODO", x["labels"])
     return x["features"], x["labels"]
 
 
-def _decode_record(record):
+def _decode_record(record, num_hidden_unit: int, num_classes: int):
     """Decodes a record to a TensorFlow example."""
     return tf.io.parse_single_example(
         record,
         {
-            "features": tf.io.FixedLenFeature([768], tf.float32),
-            "labels": tf.io.FixedLenFeature([2], tf.int64),
+            "features": tf.io.FixedLenFeature([num_hidden_unit], tf.float32),
+            "labels": tf.io.FixedLenFeature([num_classes], tf.int64),
         },
     )
 
@@ -30,6 +29,7 @@ def training_dataset(filename: str, params: Params):
         .repeat()
         .shuffle(buffer_size=params.buffer_size)
         .map(_decode_record)
+        .map(f)
         .batch(params.batch_size)
         .prefetch(1)
     )

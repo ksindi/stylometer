@@ -29,9 +29,7 @@ class StylometerModel(tf.keras.Model):
         Returns:
             logits: Tensor [B, (1 + n), 2] containing unscaled predictions.
         """
-        # inputs = Input(shape=(768,))
         # [batch_size, sentence_embeddings]
-        print("input_data", input_data)
         x = self.dense_1(input_data)
         x = self.dense_2(x)
 

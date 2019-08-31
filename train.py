@@ -53,9 +53,9 @@ logging.info("BertClient initialized")
 json_path = os.path.join(args.model_dir, "params.json")
 assert os.path.isfile(json_path), f"No configuration file found at {json_path}"
 
-train_fp = os.path.join(args.data_dir, "train.csv")
+train_fp = os.path.join(args.data_dir, "train.tfrecord")
 assert os.path.isfile(train_fp), f"No train file found at {train_fp}"
-eval_fp = os.path.join(args.data_dir, "eval.csv")
+eval_fp = os.path.join(args.data_dir, "eval.tfrecord")
 assert os.path.isfile(eval_fp), f"No validation file found at {eval_fp}"
 
 params = params.Params(json_path)
@@ -77,22 +77,21 @@ model.compile(
 # Creating Keras callbacks
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    "training_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5", save_freq=5
+    "training_checkpoints/weights.{epoch:02d}.hdf5",  # -{val_loss:.2f}
+    save_freq=5,
+    monitor="val_loss",
 )
 os.makedirs("training_checkpoints/", exist_ok=True)
 early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
 
-for item in train:
-    print(item)
-
-"""
 history = model.fit(
-    train.repeat(),
+    train,
     # epochs=5,
     # batch_size=params.batch_size,
     shuffle=True,
     steps_per_epoch=100,
     validation_data=validation,
+    validation_steps=10,
     callbacks=[
         tensorboard_callback,
         model_checkpoint_callback,
@@ -102,4 +101,3 @@ history = model.fit(
 
 print(model.summary())
 # tf.keras.utils.plot_model(simple_model, 'flower_model_with_shape_info.png', show_shapes=True)
-"""
