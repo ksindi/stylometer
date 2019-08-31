@@ -7,23 +7,29 @@ from bert_serving.client import ConcurrentBertClient
 from model.params import Params
 
 
-def training_dataset(filenames: str, params: Params, bc: ConcurrentBertClient):
+def f(x):
+    print("TODO", x["labels"])
+    return x["features"], x["labels"]
+
+
+def _decode_record(record):
+    """Decodes a record to a TensorFlow example."""
+    return tf.io.parse_single_example(
+        record,
+        {
+            "features": tf.io.FixedLenFeature([768], tf.float32),
+            "labels": tf.io.FixedLenFeature([2], tf.int64),
+        },
+    )
+
+
+def training_dataset(filename: str, params: Params):
     # datatest must be tuples of the text and the label
     return (
-        tf.data.experimental.CsvDataset(
-            filenames=filenames,
-            record_defaults=[tf.string, tf.string],
-            header=True,
-            field_delim=",",
-            select_cols=[1, 2],  # Only parse last two columns
-        )
+        tf.data.TFRecordDataset(filename)
+        .repeat()
+        .shuffle(buffer_size=params.buffer_size)
+        .map(_decode_record)
         .batch(params.batch_size)
-        .map(
-            lambda text_, label: (
-                tf.py_function(bc.encode, [text_], tf.float32, name="bert_client"),
-                label,
-            ),
-            num_parallel_calls=params.num_parallel_calls,
-        )
         .prefetch(1)
     )

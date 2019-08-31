@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Wrtie training data to tfrecords
 
-$ 
+$
 """
 
 import argparse
@@ -69,19 +69,19 @@ with tf.io.TFRecordWriter(writer_fp) as writer, tqdm.tqdm() as pbar:
         return tf.train.Feature(float_list=tf.train.FloatList(value=values))
 
     def create_int_feature(values):  # list
-        return tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
+        return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
 
     with open(train_fp) as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=',')
+        csv_reader = csv.reader(csvfile, delimiter=",")
         next(csv_reader, None)  # skip the headers
 
         for row in csv_reader:
-            vector = bc.encode([row[1]])
+            vector = bc.encode([row[1].strip()])
             label = encoder.transform([row[2]])
 
             features = {
                 "features": create_float_feature(np.squeeze(vector)),
-                "labels": create_int_feature([label]),
+                "labels": create_int_feature(np.squeeze(label)),
             }
             tf_example = tf.train.Example(features=tf.train.Features(feature=features))
             writer.write(tf_example.SerializeToString())

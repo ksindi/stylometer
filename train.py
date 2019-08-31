@@ -18,6 +18,8 @@ from model import dataset
 
 logging.set_verbosity(logging.INFO)
 
+tf.executing_eagerly()
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--model_dir",
@@ -63,8 +65,8 @@ model = model.StylometerModel(params)
 log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
 
-train = dataset.training_dataset(train_fp, params, bc)
-validation = dataset.training_dataset(eval_fp, params, bc)
+train = dataset.training_dataset(train_fp, params)
+validation = dataset.training_dataset(eval_fp, params)
 
 model.compile(
     optimizer="adam",
@@ -75,11 +77,15 @@ model.compile(
 # Creating Keras callbacks
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    "training_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5", period=5
+    "training_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5", save_freq=5
 )
 os.makedirs("training_checkpoints/", exist_ok=True)
 early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
 
+for item in train:
+    print(item)
+
+"""
 history = model.fit(
     train.repeat(),
     # epochs=5,
@@ -96,3 +102,4 @@ history = model.fit(
 
 print(model.summary())
 # tf.keras.utils.plot_model(simple_model, 'flower_model_with_shape_info.png', show_shapes=True)
+"""

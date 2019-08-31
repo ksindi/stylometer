@@ -14,10 +14,10 @@ class StylometerModel(tf.keras.Model):
             triplet_strategy: Either `batch_all` or `batch_hard`.
         """
         super().__init__()
-        num_classes = 10
+        num_classes = params.num_classes
         self.margin = params.margin
         self.squared = params.squared
-        # Define your layers here.
+
         self.dense_1 = tf.keras.layers.Dense(32, activation="relu")
         self.dense_2 = tf.keras.layers.Dense(num_classes, activation="sigmoid")
 
@@ -29,11 +29,11 @@ class StylometerModel(tf.keras.Model):
         Returns:
             logits: Tensor [B, (1 + n), 2] containing unscaled predictions.
         """
-        # embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
         # inputs = Input(shape=(768,))
         # [batch_size, sentence_embeddings]
-        print(input_data)
+        print("input_data", input_data)
         x = self.dense_1(input_data)
+        x = self.dense_2(x)
 
         # loss, fraction = batch_all_triplet_loss(
         #    labels, embeddings, margin=self.margin, squared=self.squared
