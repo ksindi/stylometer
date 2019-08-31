@@ -78,8 +78,6 @@ with tf.io.TFRecordWriter(writer_fp) as writer, tqdm.tqdm() as pbar:
         for row in csv_reader:
             vector = bc.encode([row[1].strip()])
             label = encoder.transform([row[2]])
-            print(np.squeeze(vector))
-            print(np.squeeze(label))
 
             features = {
                 "features": create_float_feature(np.squeeze(vector)),

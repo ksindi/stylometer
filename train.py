@@ -86,10 +86,10 @@ early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
 
 history = model.fit(
     train,
-    # epochs=5,
+    epochs=5,
     # batch_size=params.batch_size,
     shuffle=True,
-    steps_per_epoch=100,
+    steps_per_epoch=1000,
     validation_data=validation,
     validation_steps=10,
     callbacks=[
