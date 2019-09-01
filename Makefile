@@ -10,6 +10,9 @@ download-dataset:
 download-model:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} ./download_model.sh
 
+merge-tweets:
+	awk 'FNR==1 && NR!=1{next;}{print}' ./tweets/*.csv > ./data/data.csv
+
 build:
 		docker-compose --build
 
@@ -20,7 +23,11 @@ train:
 	docker-compose up --build train
 
 tfrecords:
-	docker-compose up --build tfrecords
+	docker-compose up --build bert-server tfrecords
+
+.PHONY: tweets
+tweets:
+	docker-compose up --build tweets
 
 local:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build bert-server

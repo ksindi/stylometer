@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Train the model"""
+"""Train the model
+
+$ python train.py --data_dir ./data/
+"""
 
 import argparse
 import datetime
@@ -31,24 +34,8 @@ parser.add_argument(
     default="/tmp/data",
     help="Directory containing the training and test dataset",
 )
-parser.add_argument(
-    "--bert_port",
-    type=int,
-    default=5555,
-    help="Port for pushing data from bert client to server",
-)
-parser.add_argument(
-    "--bert_port_out",
-    type=int,
-    default=5556,
-    help="Port for publishing results from bert server to client",
-)
 args = parser.parse_args()
 print("Args: ", args)
-
-bc = ConcurrentBertClient(port=args.bert_port, port_out=args.bert_port_out)
-
-logging.info("BertClient initialized")
 
 json_path = os.path.join(args.model_dir, "params.json")
 assert os.path.isfile(json_path), f"No configuration file found at {json_path}"
@@ -62,7 +49,7 @@ params = params.Params(json_path)
 
 model = model.StylometerModel(params)
 
-log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+log_dir = "logs/fit/" + datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
 
 train = dataset.training_dataset(train_fp, params)
@@ -86,16 +73,14 @@ early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
 
 history = model.fit(
     train,
-    epochs=5,
-    # batch_size=params.batch_size,
-    shuffle=True,
+    epochs=params.num_epochs,
     steps_per_epoch=1000,
     validation_data=validation,
     validation_steps=10,
     callbacks=[
         tensorboard_callback,
         model_checkpoint_callback,
-        # early_stopping_checkpoint,
+        early_stopping_checkpoint,
     ],
 )
 

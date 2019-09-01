@@ -33,13 +33,16 @@ services:
     volumes:
       - ./data/:/tmp/data/:rw
 
-  data:
+  tweets:
     build:
       context: .
       dockerfile: ./docker/Dockerfile-data
-    image: stylometer/data
+    image: stylometer/tweet_dumper
+    command: ["python3", "tweet_dumper.py", "--out_dir", "/tmp/tweets", "--usernames", "twitter_handles.txt"]
     environment:
       - TWITTER_CONSUMER_KEY=${TWITTER_CONSUMER_KEY}
       - TWITTER_CONSUMER_SECRET_KEY=${TWITTER_CONSUMER_SECRET_KEY}
       - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
       - TWITTER_ACCESS_TOKEN_SECRET=${TWITTER_ACCESS_TOKEN_SECRET}
+    volumes:
+      - ./tweets/:/tmp/tweets/:rw

@@ -11,7 +11,7 @@ WORKDIR ${dir}
 
 RUN python3 -m ensurepip
 RUN pip3 install --upgrade pip setuptools
-RUN pip3 install tweepy
+RUN pip3 install tweepy tqdm
 
 COPY twitter_handles.txt tweet_dumper.py ${dir}/
 

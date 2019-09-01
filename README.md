@@ -9,10 +9,36 @@ Use BERT to perform stylometry using triplet loss.
 
 ## Setting up
 
-Download BERT model and dataset:
+#### Download BERT model and dataset:
 
 ```Makefile
-make local-init
+make download-model
+```
+
+#### Get tweets:
+
+Scrape tweets from twitter accounts. A CSV will be created in the form:
+
+```csv
+timestamp,raw_text,username
+2015-12-21 21:33:41,very interesting thought,username1
+```
+
+You can modify the tweet usernames bu editing `twitter_handles.txt`.
+
+```Makefile
+make tweets
+```
+
+#### Create tfrecords:
+
+Create tfrecords that model will call.
+It will spin up a [BERT server](https://github.com/hanxiao/bert-as-service)
+and encode the text into a 768 length numpy ndarray that is serialzied to a
+tfrecord.
+
+```Makefile
+make tfrecords
 ```
 
 ## Training
@@ -21,10 +47,10 @@ make local-init
 make train
 ```
 
-## Evaluating
+## Evaluating and Visualizing
 
 ```Makefile
-EVAL_DATAET= make eval
+EVAL_DATASET= make eval
 ```
 
 ## Testing

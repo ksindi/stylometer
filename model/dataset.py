@@ -25,7 +25,11 @@ def training_dataset(filename: str, params: Params):
         tf.data.TFRecordDataset(filename)
         .repeat()
         .shuffle(buffer_size=params.buffer_size)
-        .map(lambda record: _decode_record(record, params.num_hidden_unit, params.num_classes))
+        .map(
+            lambda record: _decode_record(
+                record, params.num_hidden_unit, params.num_classes
+            )
+        )
         .batch(params.batch_size)
         .prefetch(1)
     )
