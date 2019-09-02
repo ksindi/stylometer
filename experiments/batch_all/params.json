@@ -5,6 +5,7 @@
     "buffer_size": 100,
     "validation_steps": 100,
 
+    "num_clases": 3,
     "num_hidden_unit": 768,
 
     "use_batch_norm": false,

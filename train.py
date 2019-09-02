@@ -4,7 +4,6 @@
 
 $ python train.py --data_dir ./data/
 """
-
 import argparse
 import datetime
 import json
@@ -13,6 +12,7 @@ import random
 
 from absl import logging
 import tensorflow as tf
+import tensorflow_addons as tfa
 from bert_serving.client import ConcurrentBertClient
 
 from model import params
@@ -20,8 +20,6 @@ from model import model
 from model import dataset
 
 logging.set_verbosity(logging.INFO)
-
-tf.executing_eagerly()
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -47,7 +45,7 @@ assert os.path.isfile(eval_fp), f"No validation file found at {eval_fp}"
 
 params = params.Params(json_path)
 
-model = model.StylometerModel(params)
+# model = model.StylometerModel(params)
 
 log_dir = "logs/fit/" + datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
@@ -55,16 +53,19 @@ os.makedirs(log_dir)
 train = dataset.training_dataset(train_fp, params)
 validation = dataset.training_dataset(eval_fp, params)
 
+model = tf.keras.models.Sequential(
+    [tf.keras.layers.Input(shape=(768,)), tf.keras.layers.Dense(10)]
+)
 model.compile(
     optimizer="adam",
-    loss="categorical_crossentropy",  # tf.contrib.losses.metric_learning.triplet_semihard_loss,
+    loss=tfa.losses.triplet_semihard_loss,
     metrics=["accuracy"],  # keras_metrics.precision(), keras_metrics.recall()
 )
 
 # Creating Keras callbacks
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    "training_checkpoints/weights.{epoch:02d}.hdf5",  # -{val_loss:.2f}
+    "training_checkpoints/weights.{epoch:02d}-{loss:.2f}.hdf5",
     save_freq=5,
     monitor="val_loss",
 )
@@ -80,7 +81,7 @@ history = model.fit(
     callbacks=[
         tensorboard_callback,
         model_checkpoint_callback,
-        early_stopping_checkpoint,
+        #early_stopping_checkpoint,
     ],
 )
 

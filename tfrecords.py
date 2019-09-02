@@ -12,7 +12,7 @@ import os
 from absl import logging
 from bert_serving.client import ConcurrentBertClient
 import numpy as np
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelEncoder
 import tensorflow as tf
 import tqdm
 
@@ -56,7 +56,7 @@ try:
 except OSError:
     pass
 
-encoder = LabelBinarizer()
+encoder = LabelEncoder()
 
 with open(labels_fp) as f:
     lines = f.read().splitlines()
@@ -82,7 +82,7 @@ with tf.io.TFRecordWriter(writer_fp) as writer, tqdm.tqdm() as pbar:
             # TODO: tf.squeeze
             features = {
                 "features": create_float_feature(np.squeeze(vector)),
-                "labels": create_int_feature(np.squeeze(label)),
+                "labels": create_int_feature(label),
             }
             tf_example = tf.train.Example(features=tf.train.Features(feature=features))
             writer.write(tf_example.SerializeToString())

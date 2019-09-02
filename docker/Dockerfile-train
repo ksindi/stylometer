@@ -16,6 +16,7 @@ RUN pip3 install \
   scikit-learn \
   numpy \
   tensorflow==2.0.0rc0 \
+  tensorflow-addons \
   tqdm
 
 COPY train.py tfrecords.py ${dir}/

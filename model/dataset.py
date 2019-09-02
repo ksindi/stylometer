@@ -7,13 +7,13 @@ from bert_serving.client import ConcurrentBertClient
 from model.params import Params
 
 
-def _decode_record(record, num_hidden_unit: int, num_classes: int):
+def _decode_record(record, num_hidden_unit: int):
     """Decodes a record to a TensorFlow example."""
     decoded = tf.io.parse_single_example(
         record,
         {
             "features": tf.io.FixedLenFeature([num_hidden_unit], tf.float32),
-            "labels": tf.io.FixedLenFeature([num_classes], tf.int64),
+            "labels": tf.io.FixedLenFeature([1], tf.int64),
         },
     )
     return decoded["features"], decoded["labels"]
@@ -27,7 +27,7 @@ def training_dataset(filename: str, params: Params):
         .shuffle(buffer_size=params.buffer_size)
         .map(
             lambda record: _decode_record(
-                record, params.num_hidden_unit, params.num_classes
+                record, params.num_hidden_unit
             )
         )
         .batch(params.batch_size)
