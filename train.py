@@ -47,10 +47,10 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-HP_NUM_UNITS = hp.HParam('num_units', hp.Discrete([768]))
-HP_NUM_EPOCHS = hp.HParam('num_epochs', hp.Discrete([5]))
-HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.001]))
-HP_MARGIN = hp.HParam('margin', hp.RealInterval(0.5, 1.0))
+HP_NUM_UNITS = hp.HParam("num_units", hp.Discrete([768]))
+HP_NUM_EPOCHS = hp.HParam("num_epochs", hp.Discrete([5]))
+HP_LEARNING_RATE = hp.HParam("learning_rate", hp.Discrete([0.001]))
+HP_MARGIN = hp.HParam("margin", hp.RealInterval(0.5, 1.0))
 
 data_fp = os.path.join(args.data_dir, "data.csv")
 assert os.path.isfile(data_fp), f"No data file found at {data_fp}"
@@ -58,19 +58,21 @@ assert os.path.isfile(data_fp), f"No data file found at {data_fp}"
 labels_fp = os.path.join(args.data_dir, "labels.txt")
 assert os.path.isfile(labels_fp), f"No labels file found at {labels_fp}"
 
+# create a label encoder to encode the usernames as integers
 encoder = LabelEncoder()
 with open(labels_fp) as f:
     lines = f.read().splitlines()
     encoder.fit(lines)
 
-model = model.create_model(hparams)
-
 log_dir = "logs/fit/" + datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
 os.makedirs("training_checkpoints/", exist_ok=True)
 
-train = dataset.training_dataset(data_fp, hparams)
+embedding_size = bc.encode(["Get shape"]).shape[1]
 
+train = dataset.training_dataset(data_fp, embedding_length, encoder)
+
+model = model.create_model(embedding_length, hparams)
 history = model.fit(
     train,
     epochs=params.num_epochs,
@@ -79,10 +81,10 @@ history = model.fit(
         tf.keras.callbacks.ModelCheckpoint(
             "training_checkpoints/weights.{epoch:02d}-{loss:.2f}.hdf5", save_freq=5
         ),
-        hp.KerasCallback(logdir, hparams),  # log hparams
         tf.keras.callbacks.EarlyStopping(patience=5),
+        hp.KerasCallback(logdir, hparams),  # log hparams
     ],
 )
 
 print(model.summary())
-# tf.keras.utils.plot_model(simple_model, 'flower_model_with_shape_info.png', show_shapes=True)
+# tf.keras.utils.plot_model(simple_model, 'atylometer.png', show_shapes=True)

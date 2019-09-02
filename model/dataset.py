@@ -1,16 +1,18 @@
 """Create the input data pipeline using `tf.data`"""
 
-import typing
+from typing import Generator, Optional
 
 from bert_serving.client import ConcurrentBertClient
 import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
 
 
-def generate_data(filename: str, bc: ConcurrentBertClient, encoder: LabelEncoder) -> typing.Generator[box.Box, None, None]:
+def _generate_data(
+    filename: str, bc: ConcurrentBertClient, encoder: LabelEncoder
+) -> Generator:
     with open(train_fp) as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=",")
-        colums = next(csv_reader, None)  # skip the headers
+        csv_reader = csv.reader(csvfile)
+        columns = next(csv_reader, None)
 
         username_idx = columns.index("username")
         text_idx = columns.index("raw_text")
@@ -22,13 +24,34 @@ def generate_data(filename: str, bc: ConcurrentBertClient, encoder: LabelEncoder
             yield tf.squeeze(vector), tf.squeeze(label)
 
 
-def training_dataset(g: str, hparams: Params):
-    # datatest must be tuples of the text and the label
-    return (
-        tf.data.Dataset.from_generator(g)
-        .repeat()
-        .shuffle(buffer_size=params.buffer_size)
-        .map(lambda record: _decode_record(record, params.num_hidden_unit))
-        .batch(params.batch_size)
-        .prefetch(1)
+def training_dataset(
+    filename: str,
+    embedding_size: int,
+    bc: ConcurrentBertClient,
+    encoder: LabelEncoder,
+    validation_size: Optional[int] = None,
+):
+    gen = _generate_data(filename, bc, encoder)
+
+    dataset = tf.data.Dataset.from_generator(
+        gen,
+        output_types=(tf.float32, tf.int32),
+        output_shapes=(tf.TensorShape([embedding_size]), tf.TensorShape([1])),
     )
+
+    # We can only batch as fast as bert server
+    batch_size = bc.server_config["max_batch_size"]
+
+    # Shuffle the examples.
+    dataset = dataset.shuffle(buffer_size=10 * batch_size)
+
+    # Repeat infinitely.
+    dataset = dataset.repeat(None)
+
+    # Create batches with `batch_size`
+    dataset = dataset.batch(batch_size)
+
+    # Prefetch to improve speed of the input pipeline.
+    dataset = dataset.prefetch(buffer_size=10)
+
+    return dataset
