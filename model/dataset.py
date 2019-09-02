@@ -1,35 +1,36 @@
 """Create the input data pipeline using `tf.data`"""
 
-import tensorflow as tf
+import typing
 
 from bert_serving.client import ConcurrentBertClient
-
-from model.params import Params
-
-
-def _decode_record(record, num_hidden_unit: int):
-    """Decodes a record to a TensorFlow example."""
-    decoded = tf.io.parse_single_example(
-        record,
-        {
-            "features": tf.io.FixedLenFeature([num_hidden_unit], tf.float32),
-            "labels": tf.io.FixedLenFeature([1], tf.int64),
-        },
-    )
-    return decoded["features"], decoded["labels"]
+import tensorflow as tf
+from sklearn.preprocessing import LabelEncoder
 
 
-def training_dataset(filename: str, params: Params):
+def generate_data(filename: str, bc: ConcurrentBertClient, encoder: LabelEncoder) -> typing.Generator[box.Box, None, None]:
+    encoder = LabelEncoder()
+
+    with open(train_fp) as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=",")
+        colums = next(csv_reader, None)  # skip the headers
+
+        username_idx = columns.index("username")
+        text_idx = columns.index("raw_text")
+
+        for row in csv_reader:
+            vector = bc.encode([row[text_idx].strip()])
+            label = encoder.transform([row[username_idx]])
+
+            yield tf.squeeze(vector), tf.squeeze(label)
+
+
+def training_dataset(g: str, hparams: Params):
     # datatest must be tuples of the text and the label
     return (
-        tf.data.TFRecordDataset(filename)
+        tf.data.Dataset.from_generator(g)
         .repeat()
         .shuffle(buffer_size=params.buffer_size)
-        .map(
-            lambda record: _decode_record(
-                record, params.num_hidden_unit
-            )
-        )
+        .map(lambda record: _decode_record(record, params.num_hidden_unit))
         .batch(params.batch_size)
         .prefetch(1)
     )

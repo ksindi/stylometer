@@ -22,15 +22,9 @@ bert:
 train:
 	docker-compose up --build train
 
-tfrecords:
-	docker-compose up --build bert-server tfrecords
-
 .PHONY: tweets
 tweets:
 	docker-compose up --build tweets
-
-local:
-	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build bert-server
 
 clean:
 	docker-compose down --remove-orphans || true

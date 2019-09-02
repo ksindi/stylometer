@@ -20,18 +20,7 @@ services:
     image: stylometer/train
     network_mode: host
     volumes:
-      - ./experiments/:/tmp/experiments/:rw
       - ./data/:/tmp/data/:ro
-
-  tfrecords:
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile-train
-    image: stylometer/train
-    command: ["python3", "tfrecords.py"]
-    network_mode: host
-    volumes:
-      - ./data/:/tmp/data/:rw
 
   tweets:
     build:

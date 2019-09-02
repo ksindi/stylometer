@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Scrape tweets for a given list of screen names
+
+$ python tweet_dumper.py --usernames twitter_handles.txt --out_dir tweets/
+"""
 import argparse
 import csv
 import os

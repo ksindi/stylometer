@@ -15,6 +15,7 @@ RUN pip3 install \
   bert-serving-client \
   scikit-learn \
   numpy \
+  tensorboard \
   tensorflow==2.0.0rc0 \
   tensorflow-addons \
   tqdm
