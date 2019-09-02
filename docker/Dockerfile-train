@@ -14,16 +14,13 @@ RUN pip3 install --upgrade pip setuptools
 RUN pip3 install \
   bert-serving-client \
   scikit-learn \
-  numpy \
   tensorboard \
   tensorflow==2.0.0rc0 \
   tensorflow-addons \
   tqdm
 
-COPY train.py tfrecords.py ${dir}/
+COPY train.py ${dir}/
 COPY model/ ${dir}/model/
-COPY experiments/ ${dir}/experiments/
-COPY data/ ${dir}/data/
 
 RUN chown -R ${user}: ${dir}
 

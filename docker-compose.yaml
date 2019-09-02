@@ -22,7 +22,7 @@ services:
     volumes:
       - ./data/:/tmp/data/:ro
 
-  tweets:
+  data:
     build:
       context: .
       dockerfile: ./docker/Dockerfile-data

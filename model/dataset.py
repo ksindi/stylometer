@@ -8,8 +8,6 @@ from sklearn.preprocessing import LabelEncoder
 
 
 def generate_data(filename: str, bc: ConcurrentBertClient, encoder: LabelEncoder) -> typing.Generator[box.Box, None, None]:
-    encoder = LabelEncoder()
-
     with open(train_fp) as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=",")
         colums = next(csv_reader, None)  # skip the headers

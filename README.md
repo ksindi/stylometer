@@ -32,15 +32,6 @@ make tweets
 
 #### Create tfrecords:
 
-Create tfrecords that model will call.
-It will spin up a [BERT server](https://github.com/hanxiao/bert-as-service)
-and encode the text into a 768 length numpy ndarray that is serialzied to a
-tfrecord.
-
-```Makefile
-make tfrecords
-```
-
 ## Training
 
 ```Makefile
@@ -51,12 +42,6 @@ make train
 
 ```Makefile
 EVAL_DATASET= make eval
-```
-
-## Testing
-
-```Makefile
-make test
 ```
 
 ## Credit

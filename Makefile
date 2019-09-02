@@ -4,23 +4,17 @@ export DATA_PATH:=data
 
 local-init: download-model
 
-download-dataset:
-	DATA_PATH=${DATA_PATH} docker-compose up --build data
-
 download-model:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} ./download_model.sh
 
 merge-tweets:
 	awk 'FNR==1 && NR!=1{next;}{print}' ./tweets/*.csv > ./data/data.csv
 
-build:
-		docker-compose --build
-
 bert:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build -d bert-server
 
 train:
-	docker-compose up --build train
+	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build bert-server train
 
 .PHONY: tweets
 tweets:

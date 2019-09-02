@@ -53,7 +53,15 @@ HP_LEARNING_RATE = hp.HParam('learning_rate', hp.Discrete([0.001]))
 HP_MARGIN = hp.HParam('margin', hp.RealInterval(0.5, 1.0))
 
 data_fp = os.path.join(args.data_dir, "data.csv")
-assert os.path.isfile(train_fp), f"No data file found at {data_fp}"
+assert os.path.isfile(data_fp), f"No data file found at {data_fp}"
+
+labels_fp = os.path.join(args.data_dir, "labels.txt")
+assert os.path.isfile(labels_fp), f"No labels file found at {labels_fp}"
+
+encoder = LabelEncoder()
+with open(labels_fp) as f:
+    lines = f.read().splitlines()
+    encoder.fit(lines)
 
 model = model.create_model(hparams)
 
