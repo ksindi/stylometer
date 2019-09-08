@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Wrtie training data to tfrecords
+"""Write training data to tfrecords
+
 $ python tfrecords.py --data_dir ./data/
 """
 
@@ -78,9 +79,8 @@ with tf.io.TFRecordWriter(writer_fp) as writer, tqdm.tqdm() as pbar:
             vector = bc.encode([row[1].strip()])
             label = encoder.transform([row[2]])
 
-            # TODO: tf.squeeze
             features = {
-                "features": create_float_feature(np.squeeze(vector)),
+                "features": create_float_feature(tf.squeeze(vector)),
                 "labels": create_int_feature(label),
             }
             tf_example = tf.train.Example(features=tf.train.Features(feature=features))

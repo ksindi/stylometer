@@ -17,8 +17,6 @@ from tensorboard.plugins.hparams import api as hp
 import tensorflow as tf
 import tensorflow_addons as tfa
 
-from model import model
-from model import dataset
 
 logging.set_verbosity(logging.INFO)
 
@@ -30,7 +28,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-data_fp = os.path.join(args.data_dir, "data.csv")
+data_fp = os.path.join(args.data_dir, "train.tfrecord")
 assert os.path.isfile(data_fp), f"No data file found at {data_fp}"
 
 labels_fp = os.path.join(args.data_dir, "labels.txt")
@@ -40,8 +38,7 @@ log_dir = "logs/fit/" + datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
 os.makedirs("training_checkpoints/", exist_ok=True)
 
-num_rows = sum(1 for line in open(data_fp))
-validation_size = int(num_rows * 0.1)
+validation_size = 500
 num_hidden_unit = 768
 buffer_size = 100
 batch_size = 64
@@ -94,6 +91,7 @@ model.compile(
 
 history = model.fit(
     train,
+    steps_per_epoch=100,
     epochs=num_epochs,
     callbacks=[
         tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1),
