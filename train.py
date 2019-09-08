@@ -12,11 +12,11 @@ import random
 
 from absl import logging
 from bert_serving.client import ConcurrentBertClient
+from sklearn.preprocessing import LabelEncoder
+from tensorboard.plugins.hparams import api as hp
 import tensorflow as tf
 import tensorflow_addons as tfa
-from tensorboard.plugins.hparams import api as hp
 
-from model import params
 from model import model
 from model import dataset
 
@@ -24,33 +24,11 @@ logging.set_verbosity(logging.INFO)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--bert_port",
-    type=int,
-    default=5555,
-    help="Port for pushing data from bert client to server",
-)
-parser.add_argument(
-    "--bert_port_out",
-    type=int,
-    default=5556,
-    help="Port for publishing results from bert server to client",
-)
-parser.add_argument(
     "--data_dir",
     default="/tmp/data",
     help="Directory containing the training and test dataset",
 )
-parser.add_argument(
-    "--model_dir",
-    default="experiments/batch_all",
-    help="Experiment directory containing params.json",
-)
 args = parser.parse_args()
-
-HP_NUM_UNITS = hp.HParam("num_units", hp.Discrete([768]))
-HP_NUM_EPOCHS = hp.HParam("num_epochs", hp.Discrete([5]))
-HP_LEARNING_RATE = hp.HParam("learning_rate", hp.Discrete([0.001]))
-HP_MARGIN = hp.HParam("margin", hp.RealInterval(0.5, 1.0))
 
 data_fp = os.path.join(args.data_dir, "data.csv")
 assert os.path.isfile(data_fp), f"No data file found at {data_fp}"
@@ -58,33 +36,74 @@ assert os.path.isfile(data_fp), f"No data file found at {data_fp}"
 labels_fp = os.path.join(args.data_dir, "labels.txt")
 assert os.path.isfile(labels_fp), f"No labels file found at {labels_fp}"
 
-# create a label encoder to encode the usernames as integers
-encoder = LabelEncoder()
-with open(labels_fp) as f:
-    lines = f.read().splitlines()
-    encoder.fit(lines)
-
 log_dir = "logs/fit/" + datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 os.makedirs(log_dir)
 os.makedirs("training_checkpoints/", exist_ok=True)
 
-embedding_size = bc.encode(["Get shape"]).shape[1]
+num_rows = sum(1 for line in open(data_fp))
+validation_size = int(num_rows * 0.1)
+num_hidden_unit = 768
+buffer_size = 100
+batch_size = 64
+num_epochs = 5
 
-train = dataset.training_dataset(data_fp, embedding_length, encoder)
 
-model = model.create_model(embedding_length, hparams)
+def _decode_record(record, num_hidden_unit: int):
+    """Decodes a record to a TensorFlow example."""
+    decoded = tf.io.parse_single_example(
+        record,
+        {
+            "features": tf.io.FixedLenFeature([num_hidden_unit], tf.float32),
+            "labels": tf.io.FixedLenFeature([1], tf.int64),
+        },
+    )
+    return decoded["features"], decoded["labels"]
+
+
+train = (
+    tf.data.TFRecordDataset(data_fp)
+    .skip(validation_size)
+    .repeat()
+    .shuffle(buffer_size=buffer_size)
+    .map(lambda record: _decode_record(record, num_hidden_unit))
+    .batch(batch_size)
+    .prefetch(1)
+)
+
+validation = (
+    tf.data.TFRecordDataset(data_fp)
+    .take(validation_size)
+    .repeat()
+    .shuffle(buffer_size=buffer_size)
+    .map(lambda record: _decode_record(record, num_hidden_unit))
+    .batch(batch_size)
+    .prefetch(1)
+)
+
+model = tf.keras.models.Sequential(
+    [
+        tf.keras.layers.Dense(768, activation=None),
+        tf.keras.layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1)),
+    ]
+)
+
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(),  # hparams: hp.HParam
+    loss=tfa.losses.TripletSemiHardLoss(),  # hparams["margin"]
+)
+
 history = model.fit(
     train,
-    epochs=params.num_epochs,
+    epochs=num_epochs,
     callbacks=[
         tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1),
         tf.keras.callbacks.ModelCheckpoint(
             "training_checkpoints/weights.{epoch:02d}-{loss:.2f}.hdf5", save_freq=5
         ),
         tf.keras.callbacks.EarlyStopping(patience=5),
-        hp.KerasCallback(logdir, hparams),  # log hparams
+        # hp.KerasCallback(logdir, hparams),  # log hparams
     ],
 )
 
 print(model.summary())
-# tf.keras.utils.plot_model(simple_model, 'atylometer.png', show_shapes=True)
+# tf.keras.utils.plot_model(simple_model, 'stylometer.png', show_shapes=True)

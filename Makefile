@@ -16,6 +16,10 @@ bert:
 train:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build bert-server train
 
+.PHONY: tfrecords
+tfrecords:
+	docker-compose up --build tfrecords
+
 .PHONY: tweets
 tweets:
 	docker-compose up --build tweets

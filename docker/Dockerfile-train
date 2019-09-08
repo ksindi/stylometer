@@ -19,7 +19,7 @@ RUN pip3 install \
   tensorflow-addons \
   tqdm
 
-COPY train.py ${dir}/
+COPY train.py tfrecords.py ${dir}/
 COPY model/ ${dir}/model/
 
 RUN chown -R ${user}: ${dir}
