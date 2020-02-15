@@ -13,11 +13,14 @@ download-model:
 build:
 		docker-compose --build
 
-bert-server:
+bert:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build -d bert-server
 
 train:
 	docker-compose up --build train
+
+tfrecords:
+	docker-compose up --build tfrecords
 
 local:
 	MODEL_NAME=${MODEL_NAME} MODEL_PATH=${MODEL_PATH} docker-compose up --build bert-server

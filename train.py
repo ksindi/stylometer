@@ -3,6 +3,7 @@
 """Train the model"""
 
 import argparse
+import datetime
 import json
 import os
 import random
@@ -11,11 +12,13 @@ from absl import logging
 import tensorflow as tf
 from bert_serving.client import ConcurrentBertClient
 
-from model.params import Params
-from model.input_fn import train_input_fn, eval_input_fn
-from model.model_fn import model_fn
+from model import params
+from model import model
+from model import dataset
 
 logging.set_verbosity(logging.INFO)
+
+tf.executing_eagerly()
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -45,29 +48,56 @@ print("Args: ", args)
 
 bc = ConcurrentBertClient(port=args.bert_port, port_out=args.bert_port_out)
 
-logging.info("ConcurrentBertClient initialized")
+logging.info("BertClient initialized")
 
 json_path = os.path.join(args.model_dir, "params.json")
 assert os.path.isfile(json_path), f"No configuration file found at {json_path}"
 
-train_fp = os.path.join(args.data_dir, "train.csv")
-eval_fp = os.path.join(args.data_dir, "eval.csv")
+train_fp = os.path.join(args.data_dir, "train.tfrecord")
 assert os.path.isfile(train_fp), f"No train file found at {train_fp}"
-assert os.path.isfile(eval_fp), f"No eval file found at {eval_fp}"
+eval_fp = os.path.join(args.data_dir, "eval.tfrecord")
+assert os.path.isfile(eval_fp), f"No validation file found at {eval_fp}"
 
-params = Params(json_path)
+params = params.Params(json_path)
 
-config = tf.estimator.RunConfig(
-    tf_random_seed=42,
-    model_dir=args.model_dir,
-    save_summary_steps=params.save_summary_steps,
-    save_checkpoints_secs=120,
+model = model.StylometerModel(params)
+
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+os.makedirs(log_dir)
+
+train = dataset.training_dataset(train_fp, params)
+validation = dataset.training_dataset(eval_fp, params)
+
+model.compile(
+    optimizer="adam",
+    loss="categorical_crossentropy",  # tf.contrib.losses.metric_learning.triplet_semihard_loss,
+    metrics=["accuracy"],  # keras_metrics.precision(), keras_metrics.recall()
 )
 
-estimator = tf.estimator.Estimator(model_fn, params=params, config=config)
-
-train_spec = tf.estimator.TrainSpec(input_fn=lambda: train_input_fn(train_fp, params, bc))
-eval_spec = tf.estimator.EvalSpec(
-    input_fn=lambda: eval_input_fn(eval_fp, params, bc), throttle_secs=0
+# Creating Keras callbacks
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+    "training_checkpoints/weights.{epoch:02d}.hdf5",  # -{val_loss:.2f}
+    save_freq=5,
+    monitor="val_loss",
 )
-tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+os.makedirs("training_checkpoints/", exist_ok=True)
+early_stopping_checkpoint = tf.keras.callbacks.EarlyStopping(patience=5)
+
+history = model.fit(
+    train,
+    epochs=5,
+    # batch_size=params.batch_size,
+    shuffle=True,
+    steps_per_epoch=1000,
+    validation_data=validation,
+    validation_steps=10,
+    callbacks=[
+        tensorboard_callback,
+        model_checkpoint_callback,
+        # early_stopping_checkpoint,
+    ],
+)
+
+print(model.summary())
+# tf.keras.utils.plot_model(simple_model, 'flower_model_with_shape_info.png', show_shapes=True)
