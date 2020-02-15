@@ -24,7 +24,7 @@ make train
 ## Evaluating
 
 ```Makefile
-EVAL_DATAET= make eval
+EVAL_DATASET=/some/file make eval
 ```
 
 ## Testing
