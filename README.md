@@ -27,12 +27,6 @@ make train
 EVAL_DATASET=/some/file make eval
 ```
 
-## Testing
-
-```Makefile
-make test
-```
-
 ## Credit
 
 Big thanks to the following projects for making this one easy to implement:
